@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+
+<project name="webserver" default="build" basedir=".">
+    <property name="shared.root" location="${basedir}"/>
+    <property name="project.root" location="${basedir}"/>
+    <property name="build.dir" location="${project.root}"/>
+    <property name="build.target.dir" location="${project.root}${file.separator}target"/>
+    <property name="web-inf.dir" location="${build.target.dir}${file.separator}WEB-INF"/>
+    <property name="classes.dir"     location="${web-inf.dir}${file.separator}classes"/>
+    <property name="web-inf.lib.dir" location="${web-inf.dir}${file.separator}lib"/>
+    <property name="test-classes.dir" location="${build.target.dir}${file.separator}test${file.separator}classes"/>
+    <property name="test-lib.dir"     location="${build.target.dir}${file.separator}test${file.separator}lib"/>
+    <property name="src.main.dir"  location="${build.dir}${file.separator}src${file.separator}"/>
+    <property name="inputlib.dir"  location="${shared.root}${file.separator}lib"/>
+    <property name="src.test.dir"  location="${build.dir}${file.separator}src${file.separator}test"/>
+    <property name="resources.dir" location="${build.dir}${file.separator}resources"/>
+    <property name="conf.dir"      location="${build.dir}${file.separator}conf"/>
+
+    <target name="clobber" description="create target directory and all the subdirectories">
+        <delete dir="${build.target.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${web-inf.lib.dir}"/>
+        <mkdir dir="${test-classes.dir}"/>
+        <mkdir dir="${test-lib.dir}"/>
+    </target>
+
+    <target name="compilejavamain" description="compiles main Java source code">
+        <javac srcdir="${src.main.dir}${file.separator}" destdir="${classes.dir}" debug="on" deprecation="off" optimize="on" includeAntRuntime="no">
+            <classpath>
+                <fileset dir="${inputlib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+    
+    <target name="compilejavatest" description="compiles test Java source code">
+      <javac srcdir="${src.test.dir}${file.separator}" destdir="${test-classes.dir}" debug="on" deprecation="off" optimize="on" includeAntRuntime="no">
+	<classpath>
+	  <pathelement path="${classes.dir}" />
+	  <fileset dir="${inputlib.dir}">
+	    <include name="*.jar"/>
+	  </fileset>
+	</classpath>
+      </javac>
+    </target>
+    
+    <target name="clean" description="deletes all the compiled class files">
+        <delete failonerror="false" includeemptydirs="true">
+            <fileset dir="${classes.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+            <fileset dir="${test-classes.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="pack" description="Create an archive for submission">
+      <zip destfile="submit-hw1.zip">
+        <zipfileset dir="." excludes="target/**,extra/**,**/*.class,submit-hw1.zip"/>
+      </zip>
+    </target>
+
+    <target name="build" depends="clobber">
+        <antcall target="compilejavamain"/>
+        <jar destfile="${web-inf.lib.dir}${file.separator}webserver.jar" update="true">
+            <fileset dir="${classes.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+        </jar>
+        <copy file="${conf.dir}${file.separator}web.xml" tofile="${web-inf.dir}${file.separator}web.xml" overwrite="true" />
+        <copy todir="${classes.dir}" overwrite="true">
+            <fileset dir="${conf.dir}">
+                <include name="**"/>
+                <exclude name="test/**"/>
+                <exclude name="web.xml"/>
+            </fileset>
+        </copy>
+        <copy todir="${build.target.dir}" overwrite="true">
+            <fileset dir="${resources.dir}">
+                <include name="**"/>
+            </fileset>
+        </copy>
+        <copy todir="${web-inf.lib.dir}" overwrite="true">
+            <fileset dir="${inputlib.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        <antcall target="compilejavatest" />
+        <jar destfile="${test-lib.dir}${file.separator}webserver-test.jar" update="true">
+            <fileset dir="${test-classes.dir}">
+                <include name="**"/>
+              </fileset>
+        </jar>
+        <!-- <antcall target="cleanup"/> -->
+    </target>
+
+</project>
