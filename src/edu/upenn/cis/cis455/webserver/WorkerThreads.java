@@ -86,7 +86,7 @@ class WorkerThreads extends Thread {
 				{	
 					try
 						{
-							processStatusLine(requestMethod, file, requestHttpVersion, output);
+							processStatusLine(requestMethod, file, requestHttpVersion, output, requestedResource);
 						} 
 					catch (Exception e) 
 						{
@@ -133,7 +133,7 @@ class WorkerThreads extends Thread {
 	
 	}
 
-	private void processStatusLine(String requestMethod, File file, String requestHttpVersion, OutputStream output) throws Exception
+	private void processStatusLine(String requestMethod, File file, String requestHttpVersion, OutputStream output, String requestedResource) throws Exception
 	{
 
 		if ( (requestMethod.equalsIgnoreCase("GET") || requestMethod.equalsIgnoreCase("HEAD")) 	//Check the request method 
@@ -145,9 +145,12 @@ class WorkerThreads extends Thread {
 
 
 			// check if requested file exists
-			else if (!file.isFile()) 
+			else if (!file.isFile() && !file.isDirectory()) 
 				sendNotFound(output);	// Object does not exist or is not a file: reject with 404
 			
+			// check if the requested file is actually a directory
+			else if(file.isDirectory())
+				sendDirectoryContents(file, output, requestMethod, requestedResource);
 
 			// if the requested file exists
 			else 
@@ -159,6 +162,35 @@ class WorkerThreads extends Thread {
 		else
 			sendBadRequest(output);
 
+	}
+
+	private void sendDirectoryContents(File dir, OutputStream output, String requestMethod, String requestedResource ) throws Exception
+	{
+		if(requestMethod.equalsIgnoreCase("GET") && !isInterrupted)
+		{
+			//store the directory contents
+			File list[] = dir.listFiles();	//get the list of files
+			
+			//write the headers
+			output.write(("HTTP/1.1 200 OK" + CRLF
+					+ "Content Type: Directory" + CRLF
+					+ "Date: " + new Date() + CRLF
+					+CRLF).getBytes());
+			
+			
+			//write out the directory contents
+			output.write(("<html> <p font-style=bold> -=FILE LIST=- <br/></p>").getBytes());
+			
+			for(File f: list)
+			{
+				output.write(("<a href=\'"+ requestedResource + File.separator + f.getName() + "\'>" + f.getName() + "</a> <br/>").getBytes());
+			}
+			
+			output.write(("</html>").getBytes());
+			
+			output.close();
+		}
+		
 	}
 
 	private void serveFile(OutputStream output, File file, String requestMethod) throws Exception
