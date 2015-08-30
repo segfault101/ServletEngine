@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app 
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" 
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+
+    <!-- General description of your web application -->
+
+    <display-name>Test servlets</display-name>
+    <description>
+    Some servlets you can use to test your application server
+    </description>
+
+
+    <!-- Context initialization parameters that define shared
+         String constants used within your application, which
+         can be customized by the system administrator who is
+         installing your application.  The values actually
+         assigned to these parameters can be retrieved in a
+         servlet or JSP page by calling:
+
+             String value =
+               getServletContext().getInitParameter("name");
+
+         where "name" matches the <param-name> element of
+         one of these initialization parameters.
+
+         You can define any number of context initialization
+         parameters, including zero.
+    -->
+
+    <context-param>
+      <param-name>webmaster</param-name>
+      <param-value>kalle@seas.upenn.edu</param-value>
+      <description>
+        The EMAIL address of the administrator to whom questions
+        and comments about this application should be addressed.
+      </description>
+    </context-param>
+
+
+    <!-- Servlet definitions for the servlets that make up
+         your web application, including initialization
+         parameters.  With Tomcat, you can also send requests
+         to servlets not listed here with a request like this:
+
+           http://localhost:8080/{context-path}/servlet/{classname}
+
+         but this usage is not guaranteed to be portable.  It also
+         makes relative references to images and other resources
+         required by your servlet more complicated, so defining
+         all of your servlets (and defining a mapping to them with
+         a servlet-mapping element) is recommended.
+
+         Servlet initialization parameters can be retrieved in a
+         servlet or JSP page by calling:
+
+             String value =
+               getServletConfig().getInitParameter("name");
+
+         where "name" matches the <param-name> element of
+         one of these initialization parameters.
+
+         You can define any number of servlets, including zero.
+    -->
+
+    <servlet>
+      <servlet-name>demo</servlet-name>
+      <description>
+        This is a simple demonstration servlet.
+      </description>
+      <servlet-class>Servlets.DemoServlet</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>init</servlet-name>
+      <description>
+        This servlet checks for the context init parameter "webmaster" from
+        above, and the servlet init parameter "TestParam" from below.
+      </description>
+      <servlet-class>Servlets.InitParamServlet</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <init-param>
+        <param-name>TestParam</param-name>
+        <param-value>1776</param-value>
+      </init-param>
+     <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session1</servlet-name>
+      <servlet-class>Servlets.SessionServlet1</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session2</servlet-name>
+      <servlet-class>Servlets.SessionServlet2</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>session3</servlet-name>
+      <servlet-class>Servlets.SessionServlet3</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>cookie1</servlet-name>
+      <servlet-class>Servlets.CookieServlet1</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>cookie2</servlet-name>
+      <servlet-class>Servlets.CookieServlet2</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>cookie3</servlet-name>
+      <servlet-class>Servlets.CookieServlet3</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet>
+      <servlet-name>busy</servlet-name>
+      <servlet-class>Servlets.BusyServlet</servlet-class>
+      <!-- Load this servlet at server startup time -->
+      <load-on-startup/>
+    </servlet>
+
+    <servlet-mapping>
+      <servlet-name>demo</servlet-name>
+      <url-pattern>/demo</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>init</servlet-name>
+      <url-pattern>/init</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>session1</servlet-name>
+      <url-pattern>/session1</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>session2</servlet-name>
+      <url-pattern>/session2</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>session3</servlet-name>
+      <url-pattern>/session3</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>cookie1</servlet-name>
+      <url-pattern>/cookie1</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>cookie2</servlet-name>
+      <url-pattern>/cookie2</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>cookie3</servlet-name>
+      <url-pattern>/cookie3</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>busy</servlet-name>
+      <url-pattern>/busy</url-pattern>
+    </servlet-mapping>
+
+    <!-- Define the default session timeout for your application,
+         in minutes.  From a servlet or JSP page, you can modify
+         the timeout for a particular session dynamically by using
+         HttpSession.getMaxInactiveInterval(). -->
+
+    <session-config>
+      <session-timeout>30</session-timeout>    <!-- 30 minutes -->
+    </session-config>
+
+</web-app>
