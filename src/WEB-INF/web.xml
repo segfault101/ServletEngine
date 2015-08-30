@@ -141,9 +141,10 @@
       <load-on-startup/>
     </servlet>
 
+
     <servlet-mapping>
       <servlet-name>demo</servlet-name>
-      <url-pattern>/demo</url-pattern>
+      <url-pattern>/demo/*</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
