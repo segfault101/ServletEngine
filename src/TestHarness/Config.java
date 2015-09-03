@@ -5,13 +5,15 @@ import java.util.*;
 /**
  * @author Nick Taylor
  */
-class FakeConfig implements ServletConfig {
-	private String name;
-	private FakeContext context;
+class Config implements ServletConfig {
+	
+	//All these data members are initialised when createServlets(handler, context) is called
+	private String servletName;
+	private Context context;
 	private HashMap<String,String> initParams;
 	
-	public FakeConfig(String name, FakeContext context) {
-		this.name = name;
+	public Config(String servletName, Context context) {
+		this.servletName = servletName;
 		this.context = context;
 		initParams = new HashMap<String,String>();
 	}
@@ -31,7 +33,7 @@ class FakeConfig implements ServletConfig {
 	}
 	
 	public String getServletName() {
-		return name;
+		return servletName;
 	}
 
 	void setInitParam(String name, String value) {
