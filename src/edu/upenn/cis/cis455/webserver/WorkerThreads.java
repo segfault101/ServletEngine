@@ -109,28 +109,50 @@ class WorkerThreads extends Thread {
 		//check if the method is GET or POST or HEAD, 
 		//if GET the query string is in the url
 		//if POST the parameters are in the message body of the http request IFF the content type is "application/x-www-form-urlencoded" otherwise send bad request
-		if(requestMethod == "POST")
+		if(requestMethod.equalsIgnoreCase("POST"))
 		{
 			String v = requestHeaders.get("Content-Type");
 			
-			//if v is null or v isn't equal to this content type, send bad req 
-			if(v == null || !(v.equalsIgnoreCase("application/x-www-form-urlencoded")))
+			//if v isn't equal to this content type, send bad req 
+			if(!(v.equalsIgnoreCase("application/x-www-form-urlencoded")))
 			{
 				sendBadRequest(output);
 				return;
 			}
 			
-			//otherwise read the request body i.e the query string
-			requestQueryString = input.readLine();
+			try
+			{
+				//otherwise read the request body i.e the query string
+				/*
+				 * WARNING: IF YOU USE READLINE HERE, THE METHOD HANGS SINCE THE BUFFERED READER 
+				 * EXPECTS A \n OR \r OR \r\n AND THE BODY OF THE HTTPREQUEST DOESNT END WITH EITHER OF THOSE THINGS
+				 * http://www.coderanch.com/t/463334/sockets/java/stuck-readLine-reading-HTTP-request
+				 * 
+				 */
+				
+				requestQueryString = "";
+				
+				//This is what Content-Length header was made for
+				for(int i = Integer.parseInt(requestHeaders.get("Content-Length")); i>0; i--)
+					requestQueryString += (char)input.read();
+				
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				return;
+			}
+			
+			System.out.println(requestQueryString);
 						
 		}
 		
-		else if (requestMethod.equalsIgnoreCase("GET") && requestedResource.contains("?"))
+		else if (requestMethod.equalsIgnoreCase("GET"))
 		{
-			requestQueryString = requestedResource.split("\\?")[1];			
+			requestQueryString = requestedResource.split("\\?")[1];
 			// replace all spaces
-			requestQueryString = URLDecoder.decode(requestQueryString.replace("+", "%2B"), "UTF-8");
-		}				
+			requestQueryString = URLDecoder.decode(requestQueryString, "UTF-8");
+		}
 		
 		String servletName = null;
 		
@@ -181,7 +203,6 @@ class WorkerThreads extends Thread {
 	private void storeHeaders(HashMap<String, String> requestHeaders, BufferedReader input) throws Exception {
 
 		String str;
-		int i = 0;
 		//read until you encounter an empty line
 		//if a header has multiple values seperated by commas, 
 		//we read the whole header value as a string [we don't store them seperately]
@@ -195,6 +216,7 @@ class WorkerThreads extends Thread {
 				break;
 
 		}
+		System.out.println(" ");
 
 
 	}
