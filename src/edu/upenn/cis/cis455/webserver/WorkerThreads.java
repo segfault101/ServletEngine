@@ -136,6 +136,8 @@ class WorkerThreads extends Thread {
 				for(int i = Integer.parseInt(requestHeaders.get("Content-Length")); i>0; i--)
 					requestQueryString += (char)input.read();
 				
+				requestQueryString = URLDecoder.decode(requestQueryString, "UTF-8");
+				
 			}
 			catch(Exception e)
 			{
@@ -147,11 +149,23 @@ class WorkerThreads extends Thread {
 						
 		}
 		
-		else if (requestMethod.equalsIgnoreCase("GET"))
+		else if (requestMethod.equalsIgnoreCase("GET") && requestedResource.contains("?"))
 		{
-			requestQueryString = requestedResource.split("\\?")[1];
-			// replace all spaces
-			requestQueryString = URLDecoder.decode(requestQueryString, "UTF-8");
+			String strings[] = requestedResource.split("\\?");
+						
+			if(strings.length > 1) //strings are null terminated in java
+				try
+				{
+					requestQueryString = URLDecoder.decode(strings[1], "UTF-8");
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+					return;
+				}
+
+			else
+				requestQueryString="";
 		}
 		
 		String servletName = null;
@@ -216,13 +230,10 @@ class WorkerThreads extends Thread {
 				break;
 
 		}
-		System.out.println(" ");
 
 
 	}
-
 	
-
 	private void serveControlPanel(OutputStream output) {
 		try {
 			output.write(("HTTP/1.1 200 OK"
