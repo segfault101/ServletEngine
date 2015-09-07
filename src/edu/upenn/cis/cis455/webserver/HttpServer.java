@@ -7,7 +7,7 @@ import java.net.SocketException;
 
 public class HttpServer {
 
-	static final int PORT = 8080;	
+	public static final int PORT = 8080;	
 	static final String WEBXML_PATH = "/home/cis455/workspace/HW1/src/WEB-INF/web.xml";
 	static final String ROOT = "/home/cis455/workspace/HW1/www/";
 	static Container container;	//We need only one container

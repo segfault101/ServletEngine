@@ -34,7 +34,7 @@
 
     <context-param>
       <param-name>webmaster</param-name>
-      <param-value>kalle@seas.upenn.edu</param-value>
+      <param-value>rvemuri@email.arizona.edu</param-value>
       <description>
         The EMAIL address of the administrator to whom questions
         and comments about this application should be addressed.
@@ -144,7 +144,7 @@
 
     <servlet-mapping>
       <servlet-name>demo</servlet-name>
-      <url-pattern>/demo/*</url-pattern>
+      <url-pattern>/demo</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

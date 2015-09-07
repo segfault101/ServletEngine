@@ -149,11 +149,11 @@ public class Container
 		return null;
 	}
 
-	public int runServlet(String servletName, String requestMethod, String requestHttpVersion, String requestQueryString, OutputStream output)
+	public int runServlet(String servletName, String requestMethod, String requestHttpVersion, String requestQueryString, HashMap<String, String> requestHeaders, OutputStream output)
 	{
 		
 		//Check if there is actually an associated class with the servlet name
-		if(!handler.servletNameToClass_map.get(servletName).equals(null))
+		if(handler.servletNameToClass_map.get(servletName).equals(null))
 			return SERVER_ERROR;	//send server error if class not found
 		
 		//TODO session handling
@@ -161,14 +161,29 @@ public class Container
 		
 		//TODO if the request method is "HEAD", just send headers
 		
-		Request request = new Request(session);
+		Request request = new Request(session, requestHeaders);
 		Response response = new Response();
 		
-		request.setMethod(requestMethod);
+		request.setMethod(requestMethod);				
 		
+		String strings[] = requestQueryString.split("&|=");	// '|' is the alternation symbol in regex
 		
-				
-		
+		for (int j = 0; j < strings.length - 1; j += 2) //empty queries handled implicitly
+		{
+			String parVal;
+			
+			//http spec allows mutliple values for single param name
+			if((parVal = request.getParameter(strings[j])) == null)
+				request.setParameter(strings[j], strings[j+1]);
+			//if the param name and value pair already exists concat the value
+			//valid delimiters i can use are the invalid characters in queries :http://bit.ly/1UxfEl2
+			else
+			{
+				//using , as a delimiter
+				parVal = parVal + "," + strings[j+1];
+				request.setParameter(strings[j], parVal);
+			}
+		}
 		session = (Session) request.getSession(false);
 		return SUCCESS;
 		
@@ -380,7 +395,7 @@ public class Container
 		System.err.println("usage: java TestHarness <path to web.xml> [<GET|POST> <servlet_name?params> ...]");
 	}
 	
-	
+	/*
 	public static void main(String[] args) throws Exception {
 		
 		if (args.length < 3 || args.length % 2 == 0) {
@@ -442,7 +457,7 @@ public class Container
 			System.out.println("Hit the breaks!");
 			
 		}
-	}
+	}*/
 
 }
  

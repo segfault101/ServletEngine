@@ -89,6 +89,14 @@ class WorkerThreads extends Thread {
 		
 		//read the headers and store them in case we ever need them
 		try{	// Reads the request until the start of body [Reads the empty line too]
+			requestHeaders.put("Remote_Addr", clientSocket.getRemoteSocketAddress().toString());
+			requestHeaders.put("Remote_Port", Integer.toString(clientSocket.getPort()));
+			requestHeaders.put("Local_Addr", clientSocket.getLocalSocketAddress().toString());
+			requestHeaders.put("Local_Port", Integer.toString(clientSocket.getLocalPort()));
+			requestHeaders.put("Requested_Resource", requestedResource);
+			String ASTERISK = "/";
+			requestHeaders.put("Protocol", requestHttpVersion.split(ASTERISK)[0]);
+			
 			storeHeaders (requestHeaders, input);
 			}	
 		catch(Exception e) 
@@ -105,7 +113,6 @@ class WorkerThreads extends Thread {
 			return;
 		}
 		
-		//TODO test this
 		//check if the method is GET or POST or HEAD, 
 		//if GET the query string is in the url
 		//if POST the parameters are in the message body of the http request IFF the content type is "application/x-www-form-urlencoded" otherwise send bad request
@@ -145,8 +152,9 @@ class WorkerThreads extends Thread {
 				return;
 			}
 			
-			System.out.println(requestQueryString);
-						
+			//store it so it can be accessed by the Request object via getQueryString()
+			requestHeaders.put("Query_String", requestQueryString);
+
 		}
 		
 		else if (requestMethod.equalsIgnoreCase("GET") && requestedResource.contains("?"))
@@ -192,7 +200,7 @@ class WorkerThreads extends Thread {
 
 				if(!isInterrupted)		//runServlet returns 0 if sucess, 1 if bad request, 2 if server error
 				{
-					runstatus = container.runServlet(servletName, requestMethod, requestHttpVersion, requestQueryString, output);
+					runstatus = container.runServlet(servletName, requestMethod, requestHttpVersion, requestQueryString, requestHeaders, output);
 					
 					if( runstatus == container.BAD_REQUEST)
 						sendBadRequest(output);
