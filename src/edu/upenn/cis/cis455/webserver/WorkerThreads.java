@@ -112,6 +112,11 @@ class WorkerThreads extends Thread {
 			sendBadRequest(output);
 			return;
 		}
+
+		
+		
+		
+		// If java supported pass by reference the below code wouldn't have been so ugly
 		
 		//check if the method is GET or POST or HEAD, 
 		//if GET the query string is in the url
@@ -140,8 +145,20 @@ class WorkerThreads extends Thread {
 				requestQueryString = "";
 				
 				//This is what Content-Length header was made for
-				for(int i = Integer.parseInt(requestHeaders.get("Content-Length")); i>0; i--)
+				int i;				
+				try
+				{
+					i = Integer.parseInt(requestHeaders.get("Content-Length"));
+				}
+				catch(Exception e)	//if content length isn't specified
+				{
+					i = 0;
+				}
+				
+				for(; i>0; i--)
 					requestQueryString += (char)input.read();
+				
+				requestHeaders.put("Request_Body", requestQueryString);	//Store the body before decoding
 				
 				requestQueryString = URLDecoder.decode(requestQueryString, "UTF-8");
 				
@@ -154,6 +171,7 @@ class WorkerThreads extends Thread {
 			
 			//store it so it can be accessed by the Request object via getQueryString()
 			requestHeaders.put("Query_String", requestQueryString);
+			
 
 		}
 		
@@ -174,7 +192,29 @@ class WorkerThreads extends Thread {
 
 			else
 				requestQueryString="";
+			
+			//store it so it can be accessed by the Request object via getQueryString()
+			requestHeaders.put("Query_String", requestQueryString);
+			
+			//Read the body and store
+			String getReqBody="";
+			int i;				
+			try
+			{
+				i = Integer.parseInt(requestHeaders.get("Content-Length"));
+			}
+			catch(Exception e)	//if content length isn't specified
+			{
+				i = 0;
+			}
+			for(; i>0; i--)
+				requestQueryString += (char)input.read();
+			requestHeaders.put("Request_Body", getReqBody);
 		}
+		
+		
+		
+		
 		
 		String servletName = null;
 		
@@ -231,17 +271,15 @@ class WorkerThreads extends Thread {
 		//TODO header values on multiple lines not handled
 		while ((str = input.readLine()) != null)
 		{
-			String args[] = str.split(": ");
+			String args[] = str.split(": ", 2);
 			if(!args[0].equals(""))
 				requestHeaders.put(args[0], args[1]);
 			else
 				break;
-
 		}
 
-
 	}
-	
+
 	private void serveControlPanel(OutputStream output) {
 		try {
 			output.write(("HTTP/1.1 200 OK"

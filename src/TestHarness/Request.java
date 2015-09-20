@@ -3,16 +3,19 @@ package TestHarness;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletInputStream;
@@ -46,6 +49,91 @@ class Request implements HttpServletRequest {
 		m_session = session;
 	}
 	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
+	 */
+	//IMPORTANT: READ DOC
+	public HttpSession getSession(boolean arg0) {	//whether a new session is assigned or not (when there is no session), depends on arg0
+		if (arg0) {
+			if (! hasSession()) {
+				m_session = new Session();
+			}
+		} else {
+			if (! hasSession()) {
+				m_session = null;
+			}
+		}
+		return m_session;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getSession()
+	 */
+	public HttpSession getSession() {										 	
+		return getSession(true);
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdValid()
+	 */
+	public boolean isRequestedSessionIdValid() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
+	 */
+	public boolean isRequestedSessionIdFromCookie() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
+	 */
+	// DONE
+	public boolean isRequestedSessionIdFromUrl() {
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
+	 */
+	public boolean isRequestedSessionIdFromURL() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getRequestedSessionId()
+	 */
+	public String getRequestedSessionId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServletRequest#getCookies()
+	 */
+	public Cookie[] getCookies() {
+		
+		return null;
+	}
+		
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	/* (non-Javadoc)
+	 * @see javax.servlet.ServletRequest#getReader()									//DONE
+	 */
+	public BufferedReader getReader() throws IOException {
+		return new BufferedReader(new StringReader(requestHeaders.get("Request_Body")));
+	}
+
+	
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getAuthType()
 	 */
@@ -53,13 +141,6 @@ class Request implements HttpServletRequest {
 		return "BASIC";
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#getCookies()
-	 */
-	public Cookie[] getCookies() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getDateHeader(java.lang.String)		//DONE UNTESTED
@@ -104,31 +185,44 @@ class Request implements HttpServletRequest {
 	 * @see javax.servlet.http.HttpServletRequest#getHeaders(java.lang.String)
 	 */
 	//http://stackoverflow.com/questions/3241326/set-more-than-one-http-header-with-the-same-name
-	public Enumeration getHeaders(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public Enumeration getHeaders(String arg0) {										//DONE
+		String val = requestHeaders.get(arg0);
+		if (val == null)
+			return Collections.enumeration(Collections.emptyList());
+		else
+		{
+			//remember we have comma seperated the param values that have same param name
+			StringTokenizer Tokens = new StringTokenizer(val, ",");
+			return Tokens;
+				
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getHeaderNames()
 	 */
-	public Enumeration getHeaderNames() {
-		// TODO Auto-generated method stub
-		return null;
+	@SuppressWarnings("rawtypes")
+	public Enumeration getHeaderNames() {												//DONE
+		Enumeration<String> strEnum = Collections.enumeration(requestHeaders.keySet());
+		return strEnum;
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getIntHeader(java.lang.String)
 	 */
-	public int getIntHeader(String arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getIntHeader(String arg0) {												//DONE
+		String s = requestHeaders.get(arg0);
+		
+		if(s == null)
+			return -1;
+		else 
+			return Integer.parseInt(s);		
 	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getMethod()
 	 */
-	public String getMethod() {						// DONE
+	public String getMethod() {														// DONE
 		return m_method;
 	}
 
@@ -137,8 +231,7 @@ class Request implements HttpServletRequest {
 	 */
 	//CLARIFICATION: SHOULD ALWAYS RETURN THE REMAINDER OF URL REQUEST AFTER THE PORTION MATCHED 
 	// BY THE URL PATTERN IN WEB.XML. IT STARTS WITH "/"
-	public String getPathInfo() {									
-		// TODO Auto-generated method stub
+	public String getPathInfo() {									//NOT DOING IT unless I need it - needs refactoring of code
 		return null;
 	}
 
@@ -188,13 +281,6 @@ class Request implements HttpServletRequest {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#getRequestedSessionId()
-	 */
-	public String getRequestedSessionId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.http.HttpServletRequest#getRequestURI()
@@ -251,60 +337,6 @@ class Request implements HttpServletRequest {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
-	 */
-	public HttpSession getSession(boolean arg0) {
-		if (arg0) {
-			if (! hasSession()) {
-				m_session = new Session();
-			}
-		} else {
-			if (! hasSession()) {
-				m_session = null;
-			}
-		}
-		return m_session;
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#getSession()
-	 */
-	public HttpSession getSession() {
-		return getSession(true);
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdValid()
-	 */
-	public boolean isRequestedSessionIdValid() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
-	 */
-	public boolean isRequestedSessionIdFromCookie() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
-	 */
-	// DONE
-	public boolean isRequestedSessionIdFromUrl() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
-	 */
-	public boolean isRequestedSessionIdFromURL() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getAttribute(java.lang.String)
@@ -454,13 +486,6 @@ class Request implements HttpServletRequest {
 		return Integer.parseInt(port);
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.servlet.ServletRequest#getReader()
-	 */
-	public BufferedReader getReader() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	/* (non-Javadoc)
 	 * @see javax.servlet.ServletRequest#getRemoteAddr()
@@ -562,8 +587,9 @@ class Request implements HttpServletRequest {
 	}
 
 	
-	// Where do we use these you ask?
-	// in testharness main class
+
+	
+	// used in testharness main class
 	void setMethod(String method) {
 		m_method = method;
 	}

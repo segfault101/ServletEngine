@@ -1,9 +1,11 @@
 package TestHarness;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -22,10 +24,13 @@ public class Container
 	
 	final Context context;	//my server can run only a single app
 							//so when the servlets usually map to: http://host:port/context/servletname
-							//here they map to: http://host:port/servletname
+							//here they map to: http://host:port/servletname		i.e. context = null
 	
 	final HashMap<String,HttpServlet> servlets; //and only one app means only one web.xml
 
+	private HashMap<String, Session> sessionIDtoSessionMap = new HashMap<String, Session>();				
+
+	
 	public final int BAD_REQUEST	= 2;
 	public final int SERVER_ERROR 	= 1;
 	public final int SUCCESS		= 0;
@@ -75,6 +80,8 @@ public class Container
 		
 		String longest_match = null;	//to keep track of longest path match
 		String servletName = null;		
+		
+		
 		// CASE 1: Exact Match		
 		//	Check if a SERVLET_NAME to SERVLET_URL mapping exists
 		for(String d : handler.servletNameToUrl_map.keySet())
@@ -98,10 +105,11 @@ public class Container
 
 					if(requestUrl.startsWith(strings2[0]))
 					{
+						
 						if(longest_match!=null)
 						{
 							if(longest_match.length() < servlet_url.length())
-							{ 
+							{
 								longest_match = servlet_url;
 								servletName = key;
 							}
@@ -125,7 +133,7 @@ public class Container
 					if(longest_match!=null)
 					{
 						if(longest_match.length() < servlet_url.length())
-						{ 
+						{
 							longest_match = servlet_url;
 							servletName = key;
 						}
@@ -156,15 +164,54 @@ public class Container
 		if(handler.servletNameToClass_map.get(servletName).equals(null))
 			return SERVER_ERROR;	//send server error if class not found
 		
-		//TODO session handling
 		Session session = null;
+		String cookieVal;
+
+		if((cookieVal = requestHeaders.get("Cookie")) != null)
+		{
+			if(cookieVal.contains("JSESSIONID"))
+			{
+				String[] cookieTokens = cookieVal.split(";[\\s]");
+				
+				int index =0;
+				for(; !cookieTokens[index].startsWith("JSESSIONID="); index++);
+				
+				String sessionID = cookieTokens[index].split("=", 2)[1];
+				
+				//TODO
+				if(cookieVal.contains("Expiry"))	//if the cookie contains expiry time,  
+				{
+					//load it 
+					for(; !cookieTokens[index].startsWith("Expiry="); index++);	
+					
+					String sessionExpiry = cookieTokens[index].split("=", 2)[1];
+					
+					//convert it to milliseconds
+					
+					//and compare it with server side session timeout
+					
+					//pick whichever is the least
+				}
+				else
+
+				if((session = sessionIDtoSessionMap.get(sessionID)) != null)
+				{
+					//if session expired, invalidate it and create new session
+					if(session.)
+						
+					//else use old session
+				}
+			}
+		}
 		
-		//TODO if the request method is "HEAD", just send headers
+		//TODO if the request method is "HEAD", just send headers AND content-length
+		if(!requestMethod.equalsIgnoreCase("GET") && !requestMethod.equalsIgnoreCase("POST"))
+			return BAD_REQUEST;
 		
 		Request request = new Request(session, requestHeaders);
 		Response response = new Response();
 		
-		request.setMethod(requestMethod);				
+		request.setMethod(requestMethod);			
 		
 		String strings[] = requestQueryString.split("&|=");	// '|' is the alternation symbol in regex
 		
@@ -172,7 +219,7 @@ public class Container
 		{
 			String parVal;
 			
-			//http spec allows mutliple values for single param name
+			//http spec allows mutliple values for single param name: 
 			if((parVal = request.getParameter(strings[j])) == null)
 				request.setParameter(strings[j], strings[j+1]);
 			//if the param name and value pair already exists concat the value
@@ -184,14 +231,43 @@ public class Container
 				request.setParameter(strings[j], parVal);
 			}
 		}
+		
+		HttpServlet servlet = servlets.get(servletName);
+		
+		try
+		{
+			servlet.service(request, response);
+		} 
+		catch (ServletException | IOException e) 
+		{
+			e.printStackTrace();
+			System.out.println("Error trying to run servlet.");
+			return BAD_REQUEST;
+		}
+		
 		session = (Session) request.getSession(false);
 		return SUCCESS;
 		
-
 	}
 	
-	// Peek at this:	http://docs.oracle.com/javase/7/docs/api/org/xml/sax/ContentHandler.html
-	// if you want to make changes (correctly)
+	
+	/*
+	 * TODO: Session Manager to check and remove expired sessions
+	 * TODO: Alternate ways to store sessions, database or files?
+	 */
+	private void storeSession(Session session)
+	{
+			sessionIDtoSessionMap.put(session.getId(), session);
+	}
+		
+	private Session loadSession(String sessionID)
+	{
+			return sessionIDtoSessionMap.get(sessionID);
+	}
+	
+	
+
+	// http://docs.oracle.com/javase/7/docs/api/org/xml/sax/ContentHandler.html
 	static class saxEventHandler extends DefaultHandler 
 	{
 		
@@ -389,75 +465,75 @@ public class Container
 		return servlets;
 	}
 
-	
-	// error message showing how to use test harness
-	private static void usage() {
-		System.err.println("usage: java TestHarness <path to web.xml> [<GET|POST> <servlet_name?params> ...]");
-	}
-	
-	/*
-	public static void main(String[] args) throws Exception {
-		
-		if (args.length < 3 || args.length % 2 == 0) {
-			usage();
-			System.exit(-1);
-		}
-		
-		saxEventHandler handler = parseWebdotxml(args[0]);	//args[0] is web.xml path
-		
-		Context context = createContext(handler);
-		
-		HashMap<String,HttpServlet> servlets = createServlets(handler, context);
-		
-		Session session = null;
-		
-		for (int i = 1; i < args.length - 1; i += 2) 
-		{
-			Request request = new Request(session);
-			Response response = new Response();
-		
-			//Observe that args[i+1] or args[2] == servlet_name?params 
-			//split the param_name and param_value pairs and store them
-			String[] strings = args[i+1].split("\\?|&|=");
-			
-			//get the the servlet specified in command line
-			HttpServlet servlet = servlets.get(strings[0]);
-			
-			//if null, print error
-			if (servlet == null) 
-			{
-				System.err.println("error: cannot find mapping for servlet " + strings[0]);
-				System.exit(-1);
-			}
-			
-			// Store the param_names and param_value pairs 
-			//	in the parameter hashmap of Request object
-			for (int j = 1; j < strings.length - 1; j += 2) 
-			{
-				request.setParameter(strings[j], strings[j+1]);
-				System.out.println(strings[j]+", "+strings[j+1]);
-			}
-						
-			// Check request method and set it in request if valid
-			if (args[i].compareTo("GET") == 0 || args[i].compareTo("POST") == 0) 
-			{
-				request.setMethod(args[i]);
-				
-				//FINALLY call the service method of the servlet
-				servlet.service(request, response);
-				
-			} else {
-				System.err.println("error: expecting 'GET' or 'POST', not '" + args[i] + "'");
-				usage();
-				System.exit(-1);
-			}
-			
-			session = (Session) request.getSession(false);
-			
-			System.out.println("Hit the breaks!");
-			
-		}
-	}*/
+//	
+//	// error message showing how to use test harness
+//	private static void usage() {
+//		System.err.println("usage: java TestHarness <path to web.xml> [<GET|POST> <servlet_name?params> ...]");
+//	}
+//	
+//	
+//	public static void main(String[] args) throws Exception {
+//		
+//		if (args.length < 3 || args.length % 2 == 0) {
+//			usage();
+//			System.exit(-1);
+//		}
+//		
+//		saxEventHandler handler = parseWebdotxml(args[0]);	//args[0] is web.xml path
+//		
+//		Context context = createContext(handler);
+//		
+//		HashMap<String,HttpServlet> servlets = createServlets(handler, context);
+//		
+//		Session session = null;
+//		
+//		for (int i = 1; i < args.length - 1; i += 2) 
+//		{
+//			Request request = new Request(session);
+//			Response response = new Response();
+//		
+//			//Observe that args[i+1] or args[2] == servlet_name?params 
+//			//split the param_name and param_value pairs and store them
+//			String[] strings = args[i+1].split("\\?|&|=");
+//			
+//			//get the the servlet specified in command line
+//			HttpServlet servlet = servlets.get(strings[0]);
+//			
+//			//if null, print error
+//			if (servlet == null) 
+//			{
+//				System.err.println("error: cannot find mapping for servlet " + strings[0]);
+//				System.exit(-1);
+//			}
+//			
+//			// Store the param_names and param_value pairs 
+//			//	in the parameter hashmap of Request object
+//			for (int j = 1; j < strings.length - 1; j += 2) 
+//			{
+//				request.setParameter(strings[j], strings[j+1]);
+//				System.out.println(strings[j]+", "+strings[j+1]);
+//			}
+//						
+//			// Check request method and set it in request if valid
+//			if (args[i].compareTo("GET") == 0 || args[i].compareTo("POST") == 0) 
+//			{
+//				request.setMethod(args[i]);
+//				
+//				//FINALLY call the service method of the servlet
+//				servlet.service(request, response);
+//				
+//			} else {
+//				System.err.println("error: expecting 'GET' or 'POST', not '" + args[i] + "'");
+//				usage();
+//				System.exit(-1);
+//			}
+//			
+//			session = (Session) request.getSession(false);
+//			
+//			System.out.println("Hit the breaks!");
+//			
+//		}
+//	}
 
 }
  
