@@ -2,9 +2,6 @@ package TestHarness;
 import javax.servlet.*;
 import java.util.*;
 
-/**
- * @author Nick Taylor
- */
 class FakeConfig implements ServletConfig {
 	private String name;
 	private FakeContext context;
